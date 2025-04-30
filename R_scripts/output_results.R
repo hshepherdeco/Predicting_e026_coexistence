@@ -71,7 +71,7 @@ se <- function(x, num_plots) sd(x, na.rm = TRUE) / sqrt(num_plots)
 
 
 #### Note - the next section of code requires simulation outputs that are not provided due to their large data size
-#### Code to produce the simulations is provided in file: xxxxx.R
+#### Code to produce the simulations is provided in file: test_biomass_predictions.R
 
 args <- as.data.frame(list.files("results"))  %>% separate(1, into = c("x", "y"), sep="_") %>%
   distinct() %>%
