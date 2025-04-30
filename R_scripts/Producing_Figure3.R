@@ -2,6 +2,8 @@
 
 rm(list=ls())
 
+setwd("~/Predicting_e026_coexistence")
+
 library(tidyverse)
 library(rcartocolor)
 library(ggplot2)
@@ -14,12 +16,10 @@ by_switch_number <- tibble(mod_name = numeric(),
                            upr = numeric(),
                            lwr = numeric())
 
-setwd("simulateCoexistence/")
-
 ### i = number of switches
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1) 
   
@@ -66,7 +66,7 @@ species_by_switch_number <- tibble(species = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1) 
   
@@ -122,7 +122,7 @@ richness_by_switch_number <- tibble(sp_rich = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates
   
@@ -167,12 +167,12 @@ for(i in 0:11) { ## this just uses replicates where species are planted
           axis.title = element_text(size=22)))
 
 
-load("Non_zero_replicates_all_year6.rda")
+load("Data/Non_zero_replicates_all_year6.rda")
 
 ### switches column refers to which switches have been turned OFF - which in turn switches that component OFF
 ## switches are ordered alphabetically when they occur, with full 11 switches on coded as: binit_bstar_dispersal_height_lot_mor_pheno_rep_rgr_root_rstar
 
-load("switches.rda")
+load("Data/switches.rda")
 switches <- df
 
 ##### Creating a switch dataframe that can determine whether a group is included in a model or not
@@ -510,7 +510,7 @@ comb_avgs <- bind_rows((by_group_numberG1 %>% mutate(factors = "1")),
                        (by_group_numberG2 %>% mutate(factors = "2")),
                        (by_group_numberG3 %>% mutate(factors = "3")),
                        (by_group_numberG4 %>% mutate(factors = "4")))
-## write.csv(comb_avgs, file = "comb_avgs_mech_model.csv")
+
 
 Panel3d <- ggplot(comb_avgs, aes(x = mod_name, y = mean_rmse, ymin = lwr, ymax = upr, fill = factors)) +
   geom_ribbon(alpha = 0.3, outline.type = "both") +
