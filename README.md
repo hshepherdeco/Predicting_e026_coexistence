@@ -1,6 +1,4 @@
 # Predicting_e026_coexistance
-R scripts and data required for analyzing mechanistic predictions of community coexistence in e026 Cedar Creek 
-
 All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al.,... doi: ...
 
 Description of file layout...
