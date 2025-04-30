@@ -108,12 +108,12 @@ for(plotnum in c(1,2,3,4,6,7,8,9,10)) {
                                              switch_off_height = height_switch,
                                              switch_off_root = root_switch,
                                              switch_off_dispersal = dispersal_switch,
-                                             switch_off_temp = pheno_switch,
+                                             switch_off_pheno = pheno_switch,
                                              switch_off_lot = lot_switch,
                                              switch_off_bstar = bstar_switch,
                                              switch_off_rgr = rgr_switch,
                                              switch_off_b_init = binit_switch,
-                                             switch_off_rep_local_diff = rep_switch,
+                                             switch_off_fecun = rep_switch,
                                              switch_off_mor_diff = mor_switch)
   sim_data_total[,,,match(plotnum, unique_list$uplot)] = community_E26param
 }
