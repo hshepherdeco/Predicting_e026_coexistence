@@ -166,8 +166,16 @@ for(i in 0:11) { ## this just uses replicates where species are planted
           axis.text = element_text(size = 22),
           axis.title = element_text(size=22)))
 
+#### Read in all files together
+data_list <- list()
 
-load("Data/Non_zero_replicates_all_year6.rda")
+for (i in 0:11) {
+  file_name <- paste0("Data/non_zero_replicates_", i, "_year6.rda")
+  load(file_name)
+  data_list[[i + 1]] <- non_zero_replicates  # Make sure `your_object` is the correct variable in each .rda file
+}
+
+non_zero_replicates <- do.call(rbind, data_list)
 
 ### switches column refers to which switches have been turned OFF - which in turn switches that component OFF
 ## switches are ordered alphabetically when they occur, with full 11 switches on coded as: binit_bstar_dispersal_height_lot_mor_pheno_rep_rgr_root_rstar
