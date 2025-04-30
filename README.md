@@ -1,5 +1,5 @@
 # Predicting_e026_coexistence
-All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al.,... DOI: ...
+All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al., Mechanistic flexibility when predicting grassland community composition DOI: ...
 
 ## Repository Structure
 
