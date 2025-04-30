@@ -2,13 +2,27 @@
 
 rm(list=ls())
 
-setwd("simulateCoexistence/")
+setwd("~/Predicting_e026_coexistence")
 
 library(tidyverse)
 library(rcartocolor)
+library(circlize)
 
-load("Non_zero_replicates_all_year6.rda")
-load("files_combined.rda")
+#### Read in all files together
+data_list <- list()
+
+for (i in 0:11) {
+  file_name <- paste0("Data/non_zero_replicates_", i, "_year6.rda")
+  load(file_name)
+  data_list[[i + 1]] <- non_zero_replicates  # Make sure `your_object` is the correct variable in each .rda file
+}
+
+non_zero_replicates <- do.call(rbind, data_list)
+remove(data_list)
+
+
+load("Data/files_combined.rda") ##links files to switches 
+
 
 non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1)
 
@@ -75,16 +89,14 @@ out2 <- out2 %>% dplyr::mutate(V2 = as.character(V2)) %>%
 
 switches2 <- c("Binit", "lottery", "fecun", "dispersal", "B*", "R*",  "mor", "RGR", "root", "height", "pheno")
 
-#out2 <- mutate(out2, freq = (freq - min(freq))/(max(freq) - min(freq)))
 colours <- structure(c("#ADD1EC", "#6699CC", "#0072B2", "#608B8B", "#CC6666", "#DF4A6B",
                        "#EFCAB1", "#D55E00","#DFCBDE","#CC79A7" , "#AA4499"), names = switches2)
 groups <- structure(c("Colonisation",  "Colonisation", "Colonisation",  "Colonisation", 
                       "Competition", "Competition", "Growth", "Growth",
                       "Niche differentiation", "Niche differentiation", "Niche differentiation"), names = switches2)
 
-sum(out2$freq)
-library(circlize)
-library(rcartocolor)
+sum(out2$freq) ## total number
+
 
 ###### Figure 4a
 chordDiagram(out2,
@@ -115,8 +127,7 @@ highlight.sector(c("B*", "R*"), track.index = 1, col = "#CC666699",
 ### 1100 x 700
 ### Table of values
 
-out_table <- out2 %>% rename("Attribute_1" = "V1", "Attribute_2" = "V2")
-write.csv(out_table, file = "2pair_attribute_top5pc_pairs.csv")
+out_table <- out2 %>% rename("Attribute_1" = "V1", "Attribute_2" = "V2") ## Table of pairwise values
 
 
 #### making remaining panels
@@ -221,16 +232,10 @@ Panel4c_noleg <- ggplot(top_5pc_mech, aes(x = as.factor(mod_name), y = perc, fil
            labs(tag = "C")  ## switches that appear in the top 5% of each number of switches
 
 
-########## Group level differences
-
-load("Non_zero_replicates_all_year6.rda")
-
-non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1) 
-
 ### switches column refers to which switches have been turned OFF - which in turn switches that component OFF
 ## switches are ordered alphabetically when they occur, with full 11 switches on coded as: binit_bstar_dispersal_height_lot_mor_pheno_rep_rgr_root_rstar
 
-load("switches.rda")
+load("Data/switches.rda")
 switches <- df
 
 ##### Creating a switch dataframe that can determine whether a group is included in a model or not
