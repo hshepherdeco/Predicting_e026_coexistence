@@ -3,7 +3,7 @@ All R scripts and datasets are provided for replicating all main text and supple
 
 Please cite as: TBC
 
-
+Included in this repository are R scripts and data required for analyzing mechanistic predictions of community coexistence in e026 Cedar Creek. This uses a mechanistic model provided in: https://github.com/laurajanegraham/simulateCoexistence, which predicts the biomass of up to 5 grasses sown together across a soil N gradient. For full methods, see the above citation.
 
 ## Repository Structure
 
