@@ -1,70 +1,31 @@
 ###### Producing supplementary figures: Catford et al., Mechanistic model paper
 
-
 rm(list=ls())
 
 library(tidyverse)
 library(rcartocolor)
-
-
-##### Table S4 - correlations amongst traits 
-
-### Correlations between overlap variables
-
-setwd("simulateCoexistence/")
-load("data/trait_data.rda")
-load("data/biomass_data.rda")
-source("R/competition_functions.R")
-
-
-sp_list <- dimnames(biomass_data)[[3]]
-
-root_overlap <- get_overlap_spat(trait_data$rootingdepth, switch_off_overlap = FALSE)
-dimnames(root_overlap) <- list(sp_list, sp_list)
-height_overlap <- get_overlap_spat(trait_data$h, switch_off_overlap = FALSE)
-dimnames(height_overlap) <- list(sp_list, sp_list)
-pheno_overlap <- get_overlap_pheno(trait_data[,c("PhenStart", "PhenEnd")], switch_off_overlap = FALSE)
-dimnames(pheno_overlap) <- list(sp_list, sp_list)
-
 library(reshape2)
-root_df <- melt(root_overlap, varnames = c("Species1", "Species2")) %>% dplyr::rename("Root" = value)
-height_df <- melt(height_overlap, varnames = c("Species1", "Species2")) %>% dplyr::rename("Height" = value)
-pheno_df <- melt(pheno_overlap, varnames = c("Species1", "Species2")) %>% dplyr::rename("Temporal" = value)
 
-
-comb <- cbind(root_df, height_df$Height, pheno_df$Temporal) %>% filter(!Species1 == Species2)
-colnames(comb) <- c("Sp1", "Sp2", "Root", "Height", "Pheno")
-cor(comb[,3:5])
-
-### averages for each species
-overlap_avgs <- comb %>% group_by(Sp1) %>%
-  summarise(Root_mean = mean(Root, na.rm = TRUE),
-            Height_mean = mean(Height, na.rm = TRUE),
-            Pheno_mean = mean(Pheno, na.rm = TRUE)) %>% rename(species = Sp1)
-
-
-init_df <- read.csv("e026_seed_weights.csv") %>% select(plot = Plot.number, subplot = Subplot.number, 7:11)
-colnames(init_df) <- c("plot", "subplot", "Agropyron repens", "Agrostis scabra", "Andropogon gerardi", "Schizachyrium scoparium", "Poa pratensis")
-
-init_long <- init_df %>% tidyr::gather("species", "binit", 3:7) %>% filter(binit > 0 & binit != "NA") %>% select(species, plot, subplot, binit)
-
-binit_avg <- read.csv("E26_modelled_results_year6.csv") %>%
-  filter(sown == 1) %>% select(species, plot, subplot) %>% inner_join(init_long) %>% group_by(species) %>% summarise(binit = mean(binit))
-
-
-attributes <- trait_data %>% select(species, Bm, mor, R, rf, rgr) %>% left_join(overlap_avgs, by="species") %>% left_join(binit_avg, by="species") %>%
-  select(bstar = Bm, rstar = R, mor, rgr, root = Root_mean, height = Height_mean, pheno = Pheno_mean, binit, rep = rf)
-
-
-as.data.frame(cor(attributes)) %>% round(2)
+setwd("~/Predicting_e026_coexistence")
 
 ###### Figure S1: Model error with differing number of attributes in groups
-load("Non_zero_replicates_all_year6.rda")
+
+### Read in full simulations
+data_list <- list()
+
+for (i in 0:11) {
+  file_name <- paste0("Data/non_zero_replicates_", i, "_year6.rda")
+  load(file_name)
+  data_list[[i + 1]] <- non_zero_replicates  # Make sure `your_object` is the correct variable in each .rda file
+}
+
+non_zero_replicates <- do.call(rbind, data_list)
+remove(data_list)
 
 ### switches column refers to which switches have been turned OFF - which in turn switches that component OFF
 ## switches are ordered alphabetically when they occur, with full 11 switches on coded as: binit_bstar_dispersal_height_lot_mor_pheno_rep_rgr_root_rstar
 
-load("switches.rda")
+load("Data/switches.rda")
 switches <- df
 
 ##### Creating a switch dataframe that can determine whether a group is included in a model or not
@@ -751,7 +712,12 @@ ggarrange(PanelS1A, PanelS1B, PanelS1C, PanelS1D,
           labels = c("A", "B", "C", "D", "E", "F", "G", "H", "I")) ## 1400 x 1100
 
 
+
 ##### Figure S2: Frequency top mechanism occurs in each top 5pc of best model sets
+
+### Requires datafiles from the main function
+
+setwd("~/SimulateCoexistence")
 load("data/total_biomass_data.rda")
 sp_names <- unlist(dimnames(biomass_data_total)[3])
 
@@ -763,7 +729,9 @@ seed_plots <- as.data.frame.table(seeding_data_total) %>%
   filter(seed_mass != 0) %>% spread(species, seed_mass) %>%
   unite(plot_code, c("plot", "subplot"))
 
-load(paste0("non_zero_replicates_", 0, "_year6.rda"))
+setwd("~/Predicting_e026_coexistence")
+
+load(paste0("Data/non_zero_replicates_", 0, "_year6.rda"))
 
 plot_codes <- non_zero_replicates %>% filter(sp_rich == 2) %>%
   ungroup() %>%
@@ -779,8 +747,19 @@ plot_codes <- non_zero_replicates %>% filter(sp_rich == 2) %>%
   mutate(code = paste(na.omit(c(Agrre, Agrsc, Andge, Poapr, Schsc)), collapse = "_")) %>%
   select(plot_code, code)
 
-load("Non_zero_replicates_all_year6.rda")
-load("files_combined.rda")
+### Reread back in full dataset
+data_list <- list()
+
+for (i in 0:11) {
+  file_name <- paste0("Data/non_zero_replicates_", i, "_year6.rda")
+  load(file_name)
+  data_list[[i + 1]] <- non_zero_replicates  # Make sure `your_object` is the correct variable in each .rda file
+}
+
+non_zero_replicates <- do.call(rbind, data_list)
+remove(data_list)
+
+load("Data/files_combined.rda")
 
 df_Split <- non_zero_replicates  %>%
   inner_join(files %>% select(full_name, mod_name), by = c("replicate" = "full_name")) %>%
@@ -1325,7 +1304,7 @@ results_species <- results_main <- results_sp_rich <-
 
 for(i in 1:11) {
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates
   
@@ -1416,8 +1395,6 @@ for(i in 1:11) {
   
 } ## see how to deal with NAs
 
-
-##### Figure S4 ### species level radar plots for groups
 
 results_species <- results_species %>%
   mutate(species = replace(species, species == "Agropyron repens", "Elymus repens"))
@@ -2633,8 +2610,17 @@ ggarrange(plt_speciesG4$plt[[2]], plt_speciesG4$plt[[3]], plt_speciesG4$plt[[1]]
 
 ######## Figure S8 - radar plots connecting the co-occurance of mechanisms per group
 
-load("Non_zero_replicates_all_year6.rda")
-load("files_combined.rda")
+#### Read in all files together
+data_list <- list()
+for (i in 0:11) {
+  file_name <- paste0("Data/non_zero_replicates_", i, "_year6.rda")
+  load(file_name)
+  data_list[[i + 1]] <- non_zero_replicates  # Make sure `your_object` is the correct variable in each .rda file
+}
+non_zero_replicates <- do.call(rbind, data_list)
+remove(data_list)
+
+load("Data/files_combined.rda")
 
 non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1)
 
@@ -2783,8 +2769,6 @@ groups2 <- c("Colonisation", "Competition", "Growth", "Niche differentiation")
 #out2 <- mutate(out2, freq = (freq - min(freq))/(max(freq) - min(freq)))
 colours <- structure(c("#ADD1EC", "#CC333399", "#EFCAB1", "#DFCBDE"), names = groups2)
 groups <- structure(c("Colonisation", "Competition", "Growth", "Niche differentiation"), names = groups2)
-library(circlize)
-library(rcartocolor)
 chordDiagram(out2,
              group = groups,
              grid.col = colours,
@@ -2859,8 +2843,6 @@ colours <- structure(c("#ADD1EC", "#CC333399", "#EFCAB1", "#DFCBDE"), names = gr
 groups <- structure(c("Colonisation", "Competition", "Growth", "Niche differentiation"), names = groups2)
 
 
-library(circlize)
-library(rcartocolor)
 chordDiagram(out2,
              group = groups,
              grid.col = colours,
@@ -2931,10 +2913,9 @@ out2 <- out2 %>% dplyr::mutate(V1 = as.character(V1)) %>%
 
 
 groups2 <- c("Colonisation", "Competition", "Growth", "Niche differentiation")
-#out2 <- mutate(out2, freq = (freq - min(freq))/(max(freq) - min(freq)))
 colours <- structure(c("#ADD1EC", "#CC333399", "#EFCAB1", "#DFCBDE"), names = groups2)
 groups <- structure(c("Colonisation", "Competition", "Growth", "Niche differentiation"), names = groups2)
-library(rcartocolor)
+
 chordDiagram(out2,
              group = groups,
              grid.col = colours,
@@ -2956,6 +2937,7 @@ circos.track(track.index = 2, panel.fun = function(x, y) {
 ##### Figure S9: Pairwise radar plots
 
 
+#### Fix error in this code - needs first part
 results_mainG2_code <- results_mainG2_code %>% select(mod_name, Colonisation, Growth, `Niche \ndifferentiation` = Overlap, Comp = Competition,  code, count)
 
 pair_rad1 <- ggradar((results_mainG2_code[results_mainG2_code$code == "Agrre_Agrsc",] %>% select(-code, -count)),
@@ -3057,9 +3039,6 @@ pair_rad6 <- ggradar((results_mainG2_code[results_mainG2_code$code == "Agrsc_Sch
 ggarrange(pair_rad1, pair_rad2, pair_rad3, pair_rad4, pair_rad5, pair_rad6,
           ncol= 3, nrow = 2, align = "hv")
 
-
-
-
 ##### Figure S10: Pairwise species errors
 
 
@@ -3073,12 +3052,9 @@ seed_plots <- as.data.frame.table(seeding_data_total) %>%
   filter(seed_mass != 0) %>% spread(species, seed_mass) %>%
   unite(plot_code, c("plot", "subplot"))
 
-load(paste0("non_zero_replicates_", 0, "_year6.rda"))
+load(paste0("Data/non_zero_replicates_", 0, "_year6.rda"))
 
-non_zero2 <- non_zero_replicates %>%
-  unite(code, c("plot", "subplot"), remove = FALSE) %>%
-  filter(!code %in% excl_plots$code) %>%
-  select(-code)
+non_zero2 <- non_zero_replicates
 
 plot_codes <- non_zero2 %>% filter(sp_rich == 2) %>%
   ungroup() %>%
@@ -3108,7 +3084,7 @@ by_switch_number_code <- tibble(mod_name = numeric(),
 ### i = number of switches
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates  %>%
     filter(sp_rich == 2) %>%
@@ -3155,7 +3131,7 @@ by_switch_number_species_code <- tibble(species = character(),
 ### i = number of switches
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates  %>% filter(sp_rich == 2)
   
@@ -3538,8 +3514,7 @@ ggarrange((annotate_figure((ggarrange(FigS10A, FigS10B, ncol = 2, align = "hv", 
 
 
 
-##### Figure S11: Model error exluding Poa plots
-load("data/total_biomass_data.rda")
+##### Figure S11: Model error excluding Poa plots
 
 sp_names <- unlist(dimnames(biomass_data_total)[3])
 
@@ -3564,7 +3539,7 @@ by_switch_number <- tibble(mod_name = numeric(),
 ### i = number of switches
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>%
     filter(sp_rich > 1) %>%
@@ -3611,7 +3586,7 @@ species_by_switch_number <- tibble(species = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>%
     filter(sp_rich > 1) %>%
@@ -3669,7 +3644,7 @@ richness_by_switch_number <- tibble(sp_rich = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>%
     unite(code, c("plot", "subplot"), remove = FALSE) %>%
@@ -4006,7 +3981,8 @@ ggarrange(PanelS11A, PanelS11B, PanelS11C, PanelS11D, PanelS11e, PanelS11f,
 
 ##### One attribute included - not in main text
 
-load(paste0("non_zero_replicates_1_year6.rda"))
+load(paste0("Data/non_zero_replicates_1_year6.rda"))
+
 non_zero_one_on <- non_zero_replicates %>%
   mutate(species = replace(species, species == "Agropyron repens", "Elymus repens")) %>%
   mutate(sp_rich = as.factor(sp_rich),
@@ -4031,7 +4007,7 @@ ggplot() + # 1200 x 750
 
 ##### Figure S13 - one attribute not included
 
-load(paste0("non_zero_replicates_10_year6.rda"))
+load(paste0("Data/non_zero_replicates_10_year6.rda"))
 non_zero_ten_on <- non_zero_replicates %>%
   mutate(species = replace(species, species == "Agropyron repens", "Elymus repens")) %>%
   mutate(sp_rich = as.factor(sp_rich),
@@ -4082,7 +4058,7 @@ by_switch_number <- tibble(mod_name = numeric(),
 ### i = number of switches
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1) 
   
@@ -4129,7 +4105,7 @@ species_by_switch_number <- tibble(species = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates %>% filter(sp_rich > 1) 
   
@@ -4185,7 +4161,7 @@ richness_by_switch_number <- tibble(sp_rich = character(),
 
 for(i in 0:11) { ## this just uses replicates where species are planted
   
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
+  load(paste0("Data/non_zero_replicates_", i, "_year6.rda"))
   
   non_zero2 <- non_zero_replicates
   
@@ -4532,8 +4508,6 @@ for(i in 1:nrow(out2)) {
   out2[i,3] <- nrow(distinct(df, replicate, subplot, plot))
 }
 
-#save(out2, file = "chord_diagram_pairs_nomonos.rda")
-#load("chord_diagram_pairs_nomonos.rda")
 
 out2 <- out2 %>% dplyr::mutate(V1 = as.character(V1)) %>%
   dplyr::mutate(V1 = replace(V1, V1 == "binit", "Binit"))%>%
@@ -4553,7 +4527,6 @@ out2 <- out2 %>% dplyr::mutate(V2 = as.character(V2)) %>%
 
 switches2 <- c("Binit", "lottery", "fecun", "dispersal", "B*", "R*",  "mor", "RGR", "root", "height", "pheno")
 
-# out2 <- mutate(out2, freq = (freq - min(freq))/(max(freq) - min(freq)))
 colours <- structure(c("#ADD1EC", "#6699CC", "#0072B2", "#608B8B", "#CC6666", "#DF4A6B",
                        "#EFCAB1", "#D55E00","#DFCBDE","#CC79A7" , "#AA4499"), names = switches2)
 groups <- structure(c("Colonisation",  "Colonisation", "Colonisation",  "Colonisation",
@@ -4639,7 +4612,6 @@ out2 <- out2 %>% dplyr::mutate(V2 = as.character(V2)) %>%
 
 switches2 <- c("Binit", "lottery", "fecun", "dispersal", "B*", "R*",  "mor", "RGR", "root", "height", "pheno")
 
-# out2 <- mutate(out2, freq = (freq - min(freq))/(max(freq) - min(freq)))
 colours <- structure(c("#ADD1EC", "#6699CC", "#0072B2", "#608B8B", "#CC6666", "#DF4A6B",
                        "#EFCAB1", "#D55E00","#DFCBDE","#CC79A7" , "#AA4499"), names = switches2)
 groups <- structure(c("Colonisation",  "Colonisation", "Colonisation",  "Colonisation",
@@ -4673,208 +4645,5 @@ highlight.sector(c("mor", "RGR"), track.index = 1, col = "#EFCAB1",
                  text = "Growth", cex = 1.2, text.col = "black", niceFacing = TRUE, font = 2)
 highlight.sector(c("B*", "R*"), track.index = 1, col = "#CC666699",
                  text = "Competition", cex = 1.2, text.col = "black", niceFacing = TRUE, font = 2, text.vjust = "-1mm")
-
-
-
-###### Extra figures
-
-##### Top 5% increasing model complexity
-by_switch_number_all <- tibble(mod_name = numeric(),
-                               rmse = numeric())
-
-### i = number of switches
-for(i in 0:11) { ## this just uses replicates where species are planted
-  
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
-  
-  non_zero2 <- non_zero_replicates %>%
-    filter(sp_rich > 1) %>%
-    unite(code, c("plot", "subplot"), remove = FALSE) %>%
-    select(-code)
-  
-  num_plots <- nrow(distinct(non_zero2, subplot, plot))
-  
-  df <- non_zero2 %>%
-    group_by(species, sp_rich, plot, subplot, switches) %>%
-    summarise(rmse = mean(rmse)) %>%
-    ungroup() %>%
-    group_by(sp_rich, plot, subplot, switches) %>%
-    summarise(rmse = mean(rmse)) %>%
-    ungroup() %>%
-    group_by(sp_rich, plot, subplot) %>%
-    summarise(rmse = mean(rmse)) %>%
-    mutate(mod_name = i) %>% select(mod_name, rmse)
-  
-  by_switch_number_all  <- bind_rows(by_switch_number_all, df)
-  
-}
-
-
-ggplot() + geom_histogram(aes(x=rmse), data = by_switch_number_all) +
-  facet_wrap(~mod_name, scale = "free_y") + theme_bw() +
-  geom_vline(data = by_switch_number, aes(xintercept = mean_rmse), color = "red")
-
-
-by_switch_number_t5 <- tibble(mod_name = numeric(),
-                              rmse = numeric())
-
-### i = number of switches
-for(i in 0:11) { ## this just uses replicates where species are planted
-  
-  load(paste0("non_zero_replicates_", i, "_year6.rda"))
-  
-  non_zero2 <- non_zero_replicates %>%
-    filter(sp_rich > 1)
-  
-  num_plots <- nrow(distinct(non_zero2, subplot, plot))
-  
-  df <- non_zero2 %>%
-    group_by(species, sp_rich, plot, subplot, switches) %>%
-    summarise(rmse = mean(rmse)) %>%
-    ungroup() %>%
-    group_by(sp_rich, plot, subplot, switches) %>%
-    summarise(rmse = mean(rmse)) %>%
-    ungroup() %>%
-    group_by(sp_rich, plot, subplot) %>%
-    summarise(rmse = mean(rmse)) %>%
-    mutate(pc95 = quantile(rmse, 0.05)) %>%
-    filter(rmse <= pc95) %>%
-    ungroup() %>%
-    summarise(mean_rmse = mean(rmse, na.rm = TRUE),
-              se_rmse = se(rmse, num_plots)) %>%
-    mutate(upr = mean_rmse + se_rmse,
-           lwr = mean_rmse - se_rmse,
-           mod_name = i)
-  
-  by_switch_number_t5  <- bind_rows(by_switch_number_t5, df)
-  
-}
-
-
-(Panel2A_tf <- ggplot(by_switch_number_t5, aes(x = mod_name, y = mean_rmse, ymin = lwr, ymax = upr)) +
-    geom_ribbon(fill = "grey70", alpha = 0.5) +
-    geom_line(linewidth = 1) +
-    ylab("RMSE (±1 SE)") +
-    theme_bw() +
-    xlab("Number of attributes") + # 500 x 350
-    theme(axis.text = element_text(size = 10),
-          axis.title = element_text(size=12))) ## this looks correct: increasing number of mechanisms increases model performance
-
-
-
-###### radar plot - full attributes
-
-
-results_main <- results_main %>% select(mod_name, Binit = binit, lottery = lot, fecundity = rep,
-                                        dispersal, `B*` = bstar, `R*` = rstar, mortality = mor, RGR = rgr,
-                                        root, height, phenology = pheno)
-
-results_main$mod_name <- factor(results_main$mod_name, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"))
-
-(Panel4a <- ggradar(results_main,
-                    axis.label.size = 4, # Afftects the names of the variables
-                    grid.label.size = 4,
-                    group.point.size = 3,# Simply the size of the point
-                    legend.position = "bottom")  +
-    theme_minimal() +
-    theme(axis.line = element_blank(),   # Remove axis lines
-          axis.text = element_blank(),   # Remove axis text (numbers)
-          axis.ticks = element_blank(),
-          panel.grid.major = element_blank(),   # Remove major grid lines
-          panel.grid.minor = element_blank()) +
-    theme(legend.title = element_text(size = 12, color = "black"),
-          legend.position = "right") +
-    theme(panel.grid=element_line(size=0.1)) +
-    labs(color = "Number of \nattributes"))
-
-
-
-## two groups
-dfZG2 <- non_zero_G2 %>%
-  rename(groups_ch = GroupNm2, Groups_on = group_if2) %>%
-  mutate(Groups_on = as.numeric(Groups_on)) %>%
-  group_by(species, sp_rich, plot, subplot, groups_ch, Groups_on) %>%
-  filter(sp_rich > 1) %>%
-  summarise(rmse = mean(rmse)) %>%
-  ungroup() %>%
-  group_by(sp_rich, plot, subplot, groups_ch, Groups_on) %>%
-  summarise(rmse = mean(rmse)) %>%
-  ungroup() ## gives dataframe of output replicates with model names
-
-
-results_mainG2 <- tibble(mod_name = numeric(),
-                         Growth = as.numeric(),
-                         Colonisation = as.numeric(),
-                         Competition = as.numeric(),
-                         Overlap = as.numeric())
-
-for(i in 1:4) {
-  
-  dfZZG2 <- dfZG2 %>% filter(Groups_on == i) %>% dplyr::filter(groups_ch != "None")
-  
-  radar_mainG2 <- dfZZG2 %>%
-    filter(sp_rich > 1) %>%
-    mutate(mae_top5 = quantile(rmse, 0.05)) %>%
-    filter(rmse <= mae_top5) ## then finds top 5% performing models
-  
-  
-  mech_mainG2 <- radar_mainG2 %>%
-    select(groups_ch) %>%
-    count(groups_ch) %>% ## how many times does each appear
-    separate(groups_ch, into = paste0("sw", 1:4)) %>%
-    gather(delete, mech, -n) %>%
-    select(-delete) %>%
-    na.omit() %>%
-    group_by(mech) %>%
-    summarise(n = sum(n)) %>%
-    mutate(n = n / nrow(radar_mainG2)) %>%
-    spread(mech, n) %>%
-    mutate(mod_name = i)
-  
-  results_mainG2 <- bind_rows(results_mainG2, mech_mainG2)
-  
-} ## see how to deal with NAs
-
-results_mainG2$mod_name <- factor(results_mainG2$mod_name, levels = c("1", "2", "3", "4"))
-results_mainG2 <- results_mainG2 %>% select(mod_name, Colonisation, Growth, Competition, Overlap)
-
-Panel4d <- ggradar(results_mainG2,
-                   axis.label.size = 4, # Afftects the names of the variables
-                   grid.label.size = 4,
-                   group.point.size = 3,# Simply the size of the point
-                   legend.position = "bottom")  +
-  theme_minimal() +
-  theme(axis.line = element_blank(),   # Remove axis lines
-        axis.text = element_blank(),   # Remove axis text (numbers)
-        axis.ticks = element_blank(),
-        panel.grid.major = element_blank(),   # Remove major grid lines
-        panel.grid.minor = element_blank()) +
-  theme(legend.title = element_text(size = 12, color = "black"),
-        legend.position = "right") +
-  #  scale_colour_manual(values = c("1" = "#FEC47D", "2" = "#65A688",
-  #                                 "3" = "#B54445", "4" = "#3192C4")) +
-  theme(panel.grid=element_line(size=0.1)) +
-  labs(color = "Number of \nmechanisms")
-
-
-(Panel4f_noleg <- ggplot(top_5pc_mechG2, aes(x = as.factor(Groups_on), y = perc, fill = mech)) +
-    geom_bar(stat = "identity") +
-    scale_colour_manual(values = c("Colonisation" = "#ADD1EC", "Growth" = "#EFCAB1",
-                                   "Niche differentiation" = "#DFCBDE", "Competition" = "#CC6666")) +
-    scale_fill_manual(values = c("Colonisation" = "#ADD1EC", "Growth" = "#EFCAB1",
-                                 "Niche differentiation" = "#DFCBDE", "Competition" = "#CC6666")) +
-    xlab("Number of mechanisms") + # 750 x 350
-    ylab("") + theme_bw() +
-    ylab("% in top models") +
-    guides(fill=guide_legend("Mechanism"), colour = guide_legend("Mechanism"))+
-    theme(legend.position = "none",
-          plot.tag = element_text(face = "bold", size = 24),
-          axis.text = element_text(size = 22),
-          axis.title = element_text(size=24)) +
-    guides(fill=guide_legend("Mechanism", order = 1, ncol = 1)) +
-    labs(tag = "E"))
-
-
-
 
 
