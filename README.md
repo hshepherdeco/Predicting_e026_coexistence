@@ -1,5 +1,9 @@
 # Predicting_e026_coexistence
-All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al., Mechanistic flexibility when predicting grassland community composition DOI: ...
+All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al., Mechanistic flexibility when predicting grassland community composition.
+
+Please cite as: TBC
+
+
 
 ## Repository Structure
 
@@ -7,7 +11,7 @@ This repository contains two main folders:
 
 - `R_scripts/`: Contains all R code required to produce modelled results and analyses included in the main manuscript.
   - `test_biomass_predictions.R`: Simulates all possible combinations of attributes in the model and outputs model estimates.
-  - `output_results.R`: Takes model simulations produced in `xxxxx.R` and formats the data for subsequent analysis.
+  - `output_results.R`: Takes model simulations produced in `test_biomass_predictions.R` and formats the data for subsequent analysis.
   - `Producing_Figure2.R`: Recreates Figure 2 in the main manuscript.
   - `Producing_Figure3.R`: Recreates Figure 3 in the main manuscript.
   - `Producing_Figure4.R`: Recreates Figure 4 in the main manuscript.
