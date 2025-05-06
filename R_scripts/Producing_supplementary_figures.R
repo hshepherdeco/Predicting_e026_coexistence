@@ -1,10 +1,11 @@
 ###### Producing supplementary figures: Catford et al., Mechanistic model paper
-
+###### Note - Figure IDs will be updated for final MS - at present numbering does not reflect submission
 rm(list=ls())
 
 library(tidyverse)
 library(rcartocolor)
 library(reshape2)
+library(ggpubr)
 
 setwd("~/Predicting_e026_coexistence")
 
@@ -4559,7 +4560,7 @@ highlight.sector(c("Binit", "dispersal", "lottery", "fecun"), track.index = 1, c
 highlight.sector(c("mor", "RGR"), track.index = 1, col = "#EFCAB1",
                  text = "Growth", cex = 1.2, text.col = "black", niceFacing = TRUE, font = 2)
 highlight.sector(c("B*", "R*"), track.index = 1, col = "#CC666699",
-                 text = "Competition", cex = 1.2, text.col = "black", niceFacing = TRUE, font = 2, text.vjust = "-1mm")
+                 text = "Competition", cex = 1.2, text.col = "black", niceFacing = TRUE, font = 2, text.vjust = "-1mm") # 1000 x 800
 
 ##### 4 attribute models
 
