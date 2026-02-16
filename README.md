@@ -1,7 +1,7 @@
 # Predicting_e026_coexistence
 All R scripts and datasets are provided for replicating all main text and supplementary figures for Catford et al. (2026), Multiple mechanisms are required to predict grass community composition.
 
-Please cite as: TBC
+Please cite as: Catford JA, Graham L, Shepherd HER, Hauser C, Munro N et al., (2026) Multiple mechanisms are required to predict grass community composition. Ecology letters. doi: TBC
 
 Included in this repository are R scripts and data required for analyzing mechanistic predictions of community coexistence in e026 Cedar Creek. The code uses hierarchical multi-mechanism niche model of plant community assembly provided in: https://github.com/laurajanegraham/simulateCoexistence to predict the biomass of up to 5 grasses sown together across a soil N gradient. For full methods, see the above citation.
 
